@@ -119,28 +119,9 @@ import Boid from '$src/classes/Boid';
 
 import '$src/style.css';
 
-const flock = new Flock({
-  maxGridSize: 1000,
-});
+let flock = null;
 
-for (let number = 0; number &lt; 100; number += 1) {
-  const boid = new Boid({
-    position: {
-      x: Math.random() * flock.maxGridSize,
-      y: Math.random() * flock.maxGridSize,
-    },
-    vectors: {
-      x: Math.random() * (1 - -1) + -1,
-      y: Math.random() * (1 - -1) + -1,
-    },
-    maxForce: 0.4,
-    maxSpeed: 4,
-    perceptionRadius: 150,
-  });
-  flock.insertBoid(boid);
-}
-
-window.loop = function () {
+function loop() {
   const canvas = document.querySelector('canvas');
   const context = canvas.getContext('2d');
 
@@ -160,10 +141,38 @@ window.loop = function () {
     context.fill();
   }
 
-  requestAnimationFrame(loop);
-};
+  return requestAnimationFrame(loop);
+}
 
-loop();
+function initializeFlock() {
+  flock = new Flock({
+    maxGridSize: 1000,
+  });
+  const quantity = Number(document.querySelector('[name="count"]').value);
+
+  for (let number = 0; number &lt; quantity; number += 1) {
+    const boid = new Boid({
+      position: {
+        x: Math.random() * flock.maxGridSize,
+        y: Math.random() * flock.maxGridSize,
+      },
+      vectors: {
+        x: Math.random() * (1 - -1) + -1,
+        y: Math.random() * (1 - -1) + -1,
+      },
+      maxForce: 0.4,
+      maxSpeed: 4,
+      perceptionRadius: 150,
+    });
+    flock.insertBoid(boid);
+  }
+
+  if (window.loop) window.clearAnimationFrame(window.loop);
+  window.loop = loop();
+}
+
+initializeFlock();
+document.querySelector('[name="count"]').addEventListener('change', initializeFlock);
 
 window.flock = flock;
 </code></pre>

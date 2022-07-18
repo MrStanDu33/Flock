@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tic Tac Toe code documentation classes/Boid.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Tic Tac Toe code documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://github.com/SoftwareBrothers/admin-bro"
+                        >
+                            Github
+                        </a>
+                    
+                        <a
+                            class="link user-link "
+                            href="https://admin-bro-example-app-staging.herokuapp.com/admin"
+                        >
+                            Example Application
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>classes/Boid.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Boid class file.
+ * @author DANIELS-ROTH Stan &lt;contact@daniels-roth-stan.fr>
+ */
+
+class Boid {
+  position;
+
+  vectors;
+
+  acceleration;
+
+  maxForce;
+
+  perceptionRadius;
+
+  constructor({ position, vectors, maxForce, perceptionRadius, maxSpeed }) {
+    this.position = position;
+    this.vectors = vectors;
+    this.acceleration = {
+      x: 0,
+      y: 0,
+    };
+    this.maxForce = maxForce;
+    this.maxSpeed = maxSpeed;
+    this.perceptionRadius = perceptionRadius;
+  }
+
+  update(boids) {
+    const vector = this.computeVector(boids);
+
+    this.acceleration.x += vector.x;
+    this.acceleration.y += vector.y;
+
+    this.position.x += this.vectors.x;
+    this.position.y += this.vectors.y;
+
+    this.vectors.x += this.acceleration.x;
+    this.vectors.y += this.acceleration.y;
+
+    if (this.vectors.x > this.maxSpeed) this.vectors.x = this.maxSpeed;
+    if (this.vectors.y > this.maxSpeed) this.vectors.y = this.maxSpeed;
+    if (this.vectors.x &lt; -this.maxSpeed) this.vectors.x = -this.maxSpeed;
+    if (this.vectors.y &lt; -this.maxSpeed) this.vectors.y = -this.maxSpeed;
+
+    this.acceleration.x = 0;
+    this.acceleration.y = 0;
+  }
+
+  computeVector(boids) {
+    const vectors = [];
+
+    vectors.push(...this.computeSeparationVector(boids));
+    vectors.push(...this.computeAlignmentVector(boids));
+    vectors.push(...this.computeCohesionVector(boids));
+
+    if (!vectors.length) return this.vectors;
+
+    const avgVector = {
+      x: vectors.reduce((a, b) => a + b.x, 0) / vectors.length,
+      y: vectors.reduce((a, b) => a + b.y, 0) / vectors.length,
+    };
+
+    return avgVector;
+  }
+
+  computeSeparationVector(boids) {
+    const neighboursPositions = [];
+    boids.forEach((boid) => {
+      if (this === boid) return;
+      const distance = Math.abs(boid.position.x - this.position.x) + Math.abs(boid.position.y - this.position.y);
+      if (distance &lt; this.perceptionRadius - 1) {
+        const vector = {
+          x: this.position.x - boid.position.x,
+          y: this.position.y - boid.position.y,
+        };
+
+        vector.x /= distance * distance;
+        vector.y /= distance * distance;
+
+        neighboursPositions.push(vector);
+      }
+    });
+
+    if (!neighboursPositions.length) return [];
+
+    const avgNeighboursPositions = {
+      x: neighboursPositions.reduce((a, b) => a + b.x, 0) / neighboursPositions.length,
+      y: neighboursPositions.reduce((a, b) => a + b.y, 0) / neighboursPositions.length,
+    };
+
+    const avgNeighboursPositionsMagnitude = Math.sqrt(
+      avgNeighboursPositions.x * avgNeighboursPositions.x + avgNeighboursPositions.y * avgNeighboursPositions.y,
+    );
+
+    avgNeighboursPositions.x = (avgNeighboursPositions.x / avgNeighboursPositionsMagnitude) * this.maxSpeed;
+    avgNeighboursPositions.y = (avgNeighboursPositions.y / avgNeighboursPositionsMagnitude) * this.maxSpeed;
+
+    avgNeighboursPositions.x -= this.vectors.x;
+    avgNeighboursPositions.y -= this.vectors.y;
+
+    if (avgNeighboursPositions.x > this.maxForce) avgNeighboursPositions.x = this.maxForce;
+    if (avgNeighboursPositions.y > this.maxForce) avgNeighboursPositions.y = this.maxForce;
+    if (avgNeighboursPositions.x &lt; -this.maxForce) avgNeighboursPositions.x = -this.maxForce;
+    if (avgNeighboursPositions.y &lt; -this.maxForce) avgNeighboursPositions.y = -this.maxForce;
+
+    return [
+      {
+        x: avgNeighboursPositions.x * Number(document.querySelector('[name="separation"]').value),
+        y: avgNeighboursPositions.y * Number(document.querySelector('[name="separation"]').value),
+      },
+    ];
+  }
+
+  computeAlignmentVector(boids) {
+    const vectors = [];
+    boids.forEach((boid) => {
+      if (this === boid) return;
+      if (
+        Math.abs(boid.position.x - this.position.x) &lt; this.perceptionRadius / 2 &amp;&amp;
+        Math.abs(boid.position.y - this.position.y) &lt; this.perceptionRadius / 2
+      ) {
+        vectors.push(boid.vectors);
+      }
+    });
+
+    if (!vectors.length) return [];
+
+    const avgAlignmentVectors = {
+      x: vectors.reduce((a, b) => a + b.x, 0) / vectors.length,
+      y: vectors.reduce((a, b) => a + b.y, 0) / vectors.length,
+    };
+
+    const avgAlignmentVectorsMagnitude = Math.sqrt(
+      avgAlignmentVectors.x * avgAlignmentVectors.x + avgAlignmentVectors.y * avgAlignmentVectors.y,
+    );
+
+    avgAlignmentVectors.x = (avgAlignmentVectors.x / avgAlignmentVectorsMagnitude) * this.maxSpeed;
+    avgAlignmentVectors.y = (avgAlignmentVectors.y / avgAlignmentVectorsMagnitude) * this.maxSpeed;
+
+    avgAlignmentVectors.x -= this.vectors.x;
+    avgAlignmentVectors.y -= this.vectors.y;
+
+    if (avgAlignmentVectors.x > 1) avgAlignmentVectors.x = this.maxForce;
+    if (avgAlignmentVectors.y > 1) avgAlignmentVectors.y = this.maxForce;
+    if (avgAlignmentVectors.x &lt; -1) avgAlignmentVectors.x = -this.maxForce;
+    if (avgAlignmentVectors.y &lt; -1) avgAlignmentVectors.y = -this.maxForce;
+
+    return [
+      {
+        x: avgAlignmentVectors.x * Number(document.querySelector('[name="alignment"]').value),
+        y: avgAlignmentVectors.y * Number(document.querySelector('[name="alignment"]').value),
+      },
+    ];
+  }
+
+  computeCohesionVector(boids) {
+    const neighboursPositions = [];
+    boids.forEach((boid) => {
+      if (this === boid) return;
+      if (
+        Math.abs(boid.position.x - this.position.x) &lt; this.perceptionRadius &amp;&amp;
+        Math.abs(boid.position.y - this.position.y) &lt; this.perceptionRadius
+      ) {
+        neighboursPositions.push(boid.position);
+      }
+    });
+
+    if (!neighboursPositions.length) return [];
+
+    const avgNeighboursPositions = {
+      x: neighboursPositions.reduce((a, b) => a + b.x, 0) / neighboursPositions.length,
+      y: neighboursPositions.reduce((a, b) => a + b.y, 0) / neighboursPositions.length,
+    };
+
+    avgNeighboursPositions.x -= this.position.x;
+    avgNeighboursPositions.y -= this.position.y;
+
+    const avgNeighboursPositionsMagnitude = Math.sqrt(
+      avgNeighboursPositions.x * avgNeighboursPositions.x + avgNeighboursPositions.y * avgNeighboursPositions.y,
+    );
+
+    avgNeighboursPositions.x = (avgNeighboursPositions.x / avgNeighboursPositionsMagnitude) * this.maxSpeed;
+    avgNeighboursPositions.y = (avgNeighboursPositions.y / avgNeighboursPositionsMagnitude) * this.maxSpeed;
+
+    avgNeighboursPositions.x -= this.vectors.x;
+    avgNeighboursPositions.y -= this.vectors.y;
+
+    if (avgNeighboursPositions.x > this.maxForce) avgNeighboursPositions.x = this.maxForce;
+    if (avgNeighboursPositions.y > this.maxForce) avgNeighboursPositions.y = this.maxForce;
+    if (avgNeighboursPositions.x &lt; -this.maxForce) avgNeighboursPositions.x = -this.maxForce;
+    if (avgNeighboursPositions.y &lt; -this.maxForce) avgNeighboursPositions.y = -this.maxForce;
+
+    return [
+      {
+        x: avgNeighboursPositions.x * Number(document.querySelector('[name="cohesion"]').value),
+        y: avgNeighboursPositions.y * Number(document.querySelector('[name="cohesion"]').value),
+      },
+    ];
+  }
+}
+
+export default Boid;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>

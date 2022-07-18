@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tic Tac Toe code documentation index.js</title>
+  <title>Tic Tac Toe code documentation classes/Flock.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -100,7 +100,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>index.js</h1>
+                    <h1>classes/Flock.js</h1>
                 </header>
                 
 
@@ -110,62 +110,35 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * @file Entry point file.
+ * @file Flock class file.
  * @author DANIELS-ROTH Stan &lt;contact@daniels-roth-stan.fr>
  */
 
-import Flock from '$src/classes/Flock';
-import Boid from '$src/classes/Boid';
+class Flock {
+  cohesionForce;
 
-import '$src/style.css';
+  separationForce;
 
-const flock = new Flock({
-  maxGridSize: 1000,
-});
+  alignmentForce;
 
-for (let number = 0; number &lt; 100; number += 1) {
-  const boid = new Boid({
-    position: {
-      x: Math.random() * flock.maxGridSize,
-      y: Math.random() * flock.maxGridSize,
-    },
-    vectors: {
-      x: Math.random() * (1 - -1) + -1,
-      y: Math.random() * (1 - -1) + -1,
-    },
-    maxForce: 0.4,
-    maxSpeed: 4,
-    perceptionRadius: 150,
-  });
-  flock.insertBoid(boid);
-}
+  maxGridSize;
 
-window.loop = function () {
-  const canvas = document.querySelector('canvas');
-  const context = canvas.getContext('2d');
+  boid;
 
-  context.clearRect(0, 0, canvas.width, canvas.height);
-
-  /* eslint-disable */
-  for (const boid of flock.boids) {
-    boid.update(flock.boids);
-    if (boid.position.x > flock.maxGridSize) boid.position.x = 0;
-    if (boid.position.x &lt; 0) boid.position.x = flock.maxGridSize;
-    if (boid.position.y > flock.maxGridSize) boid.position.y = 0;
-    if (boid.position.y &lt; 0) boid.position.y = flock.maxGridSize;
-
-    context.beginPath();
-    context.moveTo(boid.position.x, boid.position.y);
-    context.arc(boid.position.x, boid.position.y, 3, 0, 2 * Math.PI);
-    context.fill();
+  constructor({ cohesionForce, separationForce, alignmentForce, maxGridSize }) {
+    this.cohesionForce = cohesionForce;
+    this.separationForce = separationForce;
+    this.alignmentForce = alignmentForce;
+    this.maxGridSize = maxGridSize;
+    this.boids = [];
   }
 
-  requestAnimationFrame(loop);
-};
+  insertBoid(boid) {
+    this.boids.push(boid);
+  }
+}
 
-loop();
-
-window.flock = flock;
+export default Flock;
 </code></pre>
         </article>
     </section>

@@ -35,8 +35,6 @@ class Boid {
     this.position.x += this.vectors.x;
     this.position.y += this.vectors.y;
 
-    if (Number.isNaN(this.position.x) || Number.isNaN(this.position.y)) debugger;
-
     this.vectors.x += this.acceleration.x;
     this.vectors.y += this.acceleration.y;
 
@@ -62,8 +60,6 @@ class Boid {
       x: vectors.reduce((a, b) => a + b.x, 0) / vectors.length,
       y: vectors.reduce((a, b) => a + b.y, 0) / vectors.length,
     };
-
-    if (Number.isNaN(avgVector.x) || Number.isNaN(avgVector.y)) debugger;
 
     return avgVector;
   }

@@ -1,4 +1,3 @@
-/* eslint-disable no-debugger */
 /**
  * @file Boid class file.
  * @author DANIELS-ROTH Stan <contact@daniels-roth-stan.fr>

@@ -26,7 +26,6 @@ for (let number = 0; number < 100; number += 1) {
     maxSpeed: 4,
     perceptionRadius: 150,
   });
-  // eslint-disable-next-line no-debugger
   flock.insertBoid(boid);
 }
 

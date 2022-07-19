@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tic Tac Toe code documentation classes/Boid.js</title>
+  <title>Tic Tac Toe code documentation classes/Vector.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -100,7 +100,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>classes/Boid.js</h1>
+                    <h1>classes/Vector.js</h1>
                 </header>
                 
 
@@ -110,138 +110,134 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * @file Boid class file.
+ * @file Vector class file.
  * @author DANIELS-ROTH Stan &lt;contact@daniels-roth-stan.fr>
  */
 
-import Vector from '$src/classes/Vector';
+class Vector {
+  #innerVectors = [];
 
-class Boid {
-  position;
+  #limit = Infinity;
 
-  vectors;
+  #magnitude = null;
 
-  acceleration;
-
-  maxForce;
-
-  perceptionRadius;
-
-  constructor({ position, vectors, maxForce, perceptionRadius, maxSpeed }) {
-    this.position = position;
-    this.vectors = new Vector(vectors);
-    this.acceleration = new Vector({ x: 0, y: 0 });
-    this.maxForce = maxForce;
-    this.maxSpeed = maxSpeed;
-    this.perceptionRadius = perceptionRadius;
+  constructor(vector = { x: 0, y: 0 }) {
+    this.#innerVectors.push(vector);
   }
 
-  update(boids) {
-    const vector = new Vector(this.computeVector(boids));
-
-    this.acceleration.add(vector.getComponents());
-
-    this.position.x += this.vectors.getComponents().x;
-    this.position.y += this.vectors.getComponents().y;
-
-    this.vectors.add(this.acceleration.getComponents());
-
-    this.vectors.limit(this.maxSpeed);
-
-    this.acceleration = new Vector();
-    this.vectors = new Vector(this.vectors.getComponents());
-  }
-
-  computeVector(boids) {
-    const vectors = new Vector();
-    const neighboursSeparation = [];
-    const neighboursAlignment = [];
-    const neighboursCohesion = [];
-
-    boids.forEach((boid) => {
-      if (this === boid) return;
-
-      const distance = Math.abs(boid.position.x - this.position.x) + Math.abs(boid.position.y - this.position.y);
-
-      if (distance &lt; this.perceptionRadius) {
-        neighboursCohesion.push(boid.position);
-      }
-
-      if (distance &lt; this.perceptionRadius / 2) {
-        neighboursAlignment.push(boid.vectors.getComponents());
-      }
-
-      if (distance &lt; this.perceptionRadius - 1) {
-        neighboursSeparation.push({
-          x: ((this.position.x - boid.position.x) / distance) * distance,
-          y: ((this.position.y - boid.position.y) / distance) * distance,
-        });
-      }
+  add(position) {
+    if (position === undefined) return;
+    this.#innerVectors.push({
+      x: position.x,
+      y: position.y,
     });
-
-    vectors.add(this.computeSeparationVector(neighboursSeparation));
-
-    vectors.add(this.computeAlignmentVector(neighboursAlignment));
-
-    vectors.add(this.computeCohesionVector(neighboursCohesion));
-
-    return vectors.getComponents();
   }
 
-  computeSeparationVector(neighboursPositions) {
-    if (!neighboursPositions.length) return { x: 0, y: 0 };
-
-    const avgNeighboursPositions = new Vector({
-      x: neighboursPositions.reduce((a, b) => a + b.x, 0) / neighboursPositions.length,
-      y: neighboursPositions.reduce((a, b) => a + b.y, 0) / neighboursPositions.length,
+  sub(position) {
+    if (position === undefined) return;
+    this.#innerVectors.push({
+      x: -position.x,
+      y: -position.y,
     });
-
-    avgNeighboursPositions.magnitude(this.maxSpeed);
-
-    avgNeighboursPositions.sub(this.vectors.getComponents());
-
-    avgNeighboursPositions.limit(this.maxForce);
-
-    avgNeighboursPositions.mult(Number(document.querySelector('[name="separation"]').value));
-
-    return avgNeighboursPositions.getComponents();
   }
 
-  computeAlignmentVector(neighboursAlignment) {
-    if (!neighboursAlignment.length) return { x: 0, y: 0 };
-
-    const avgAlignmentVectors = new Vector({
-      x: neighboursAlignment.reduce((a, b) => a + b.x, 0) / neighboursAlignment.length,
-      y: neighboursAlignment.reduce((a, b) => a + b.y, 0) / neighboursAlignment.length,
-    });
-
-    avgAlignmentVectors.magnitude(this.maxSpeed);
-    avgAlignmentVectors.sub(this.vectors.getComponents());
-    avgAlignmentVectors.limit(this.maxForce);
-    avgAlignmentVectors.mult(Number(document.querySelector('[name="alignment"]').value));
-
-    return avgAlignmentVectors.getComponents();
+  mult(multiplier) {
+    if (multiplier === undefined) return;
+    this.#innerVectors = this.#innerVectors.map((vector) => ({
+      x: vector.x * multiplier,
+      y: vector.y * multiplier,
+    }));
   }
 
-  computeCohesionVector(neighboursCohesion) {
-    if (!neighboursCohesion.length) return { x: 0, y: 0 };
+  div(divider) {
+    if (divider === undefined) return;
+    this.#innerVectors = this.#innerVectors.map((vector) => ({
+      x: vector.x / divider,
+      y: vector.y / divider,
+    }));
+  }
 
-    const avgNeighboursPositions = new Vector({
-      x: neighboursCohesion.reduce((a, b) => a + b.x, 0) / neighboursCohesion.length,
-      y: neighboursCohesion.reduce((a, b) => a + b.y, 0) / neighboursCohesion.length,
-    });
+  limit(limit) {
+    if (limit === undefined) return;
+    this.#limit = limit;
+  }
 
-    avgNeighboursPositions.sub(this.position);
-    avgNeighboursPositions.magnitude(this.maxSpeed);
-    avgNeighboursPositions.sub(this.vectors.getComponents());
-    avgNeighboursPositions.limit(this.maxForce);
-    avgNeighboursPositions.mult(Number(document.querySelector('[name="cohesion"]').value));
+  magnitude(magnitude) {
+    if (magnitude === undefined) return;
+    this.#magnitude = magnitude;
+  }
 
-    return avgNeighboursPositions.getComponents();
+  getComponents() {
+    const baseVector = this.#computeAvgPositionVectors();
+
+    const vectorWithMagnitude = this.#computeVectorWithMagnitude(baseVector);
+    const vectorWithLimit = this.#computeVectorWithLimit(vectorWithMagnitude);
+
+    const mag = Vector.#computeMagnitude(vectorWithLimit);
+    const angle = Vector.#computeAngle(vectorWithLimit);
+
+    const x = mag * Math.cos((angle * Math.PI) / 180);
+    const y = mag * Math.sin((angle * Math.PI) / 180);
+
+    return {
+      x: Number(x.toFixed(2)),
+      y: Number(y.toFixed(2)),
+    };
+  }
+
+  #computeAvgPositionVectors() {
+    return {
+      x: this.#innerVectors.reduce((sum, vector) => sum + vector.x, 0),
+      y: this.#innerVectors.reduce((sum, vector) => sum + vector.y, 0),
+    };
+  }
+
+  static #computeAngle(vector) {
+    if (vector.x === 0 &amp;&amp; vector.y === 0) return 0;
+    if (vector.x === 0 &amp;&amp; vector.y > 0) return 90;
+    if (vector.x === 0 &amp;&amp; vector.y &lt; 0) return -90;
+
+    const ratio = vector.y / vector.x;
+
+    let angleCorrector = 0;
+    if (vector.x &lt; 0 &amp;&amp; vector.y &lt; 0) angleCorrector = -180;
+    if (vector.x &lt; 0 &amp;&amp; vector.y > 0) angleCorrector = 180;
+
+    const angle = (Math.atan(ratio) * 180) / Math.PI;
+
+    return angle + angleCorrector;
+  }
+
+  static #computeMagnitude(vector) {
+    const magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
+
+    return magnitude;
+  }
+
+  #computeVectorWithMagnitude(vector) {
+    const magnitude = this.#magnitude ?? Vector.#computeMagnitude(vector);
+    const angle = Vector.#computeAngle(vector);
+
+    return {
+      x: magnitude * Math.cos((angle * Math.PI) / 180),
+      y: magnitude * Math.sin((angle * Math.PI) / 180),
+    };
+  }
+
+  #computeVectorWithLimit(vector) {
+    const magnitude = Vector.#computeMagnitude(vector) > this.#limit ? this.#limit : Vector.#computeMagnitude(vector);
+    const angle = Vector.#computeAngle(vector);
+
+    return {
+      x: magnitude * Math.cos((angle * Math.PI) / 180),
+      y: magnitude * Math.sin((angle * Math.PI) / 180),
+    };
   }
 }
 
-export default Boid;
+window.Vector = Vector;
+
+export default Vector;
 </code></pre>
         </article>
     </section>

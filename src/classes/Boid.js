@@ -49,10 +49,34 @@ class Boid {
 
   computeVector(boids) {
     const vectors = [];
+    const neighboursSeparation = [];
+    const neighboursAlignment = [];
+    const neighboursCohesion = [];
 
-    vectors.push(...this.computeSeparationVector(boids));
-    vectors.push(...this.computeAlignmentVector(boids));
-    vectors.push(...this.computeCohesionVector(boids));
+    boids.forEach((boid) => {
+      if (this === boid) return;
+
+      const distance = Math.abs(boid.position.x - this.position.x) + Math.abs(boid.position.y - this.position.y);
+
+      if (distance < this.perceptionRadius) {
+        neighboursCohesion.push(boid.position);
+      }
+
+      if (distance < this.perceptionRadius / 2) {
+        neighboursAlignment.push(boid.vectors);
+      }
+
+      if (distance < this.perceptionRadius - 1) {
+        neighboursSeparation.push({
+          x: ((this.position.x - boid.position.x) / distance) * distance,
+          y: ((this.position.y - boid.position.y) / distance) * distance,
+        });
+      }
+    });
+
+    vectors.push(...this.computeSeparationVector(neighboursSeparation));
+    vectors.push(...this.computeAlignmentVector(neighboursAlignment));
+    vectors.push(...this.computeCohesionVector(neighboursCohesion));
 
     if (!vectors.length) return this.vectors;
 
@@ -64,24 +88,7 @@ class Boid {
     return avgVector;
   }
 
-  computeSeparationVector(boids) {
-    const neighboursPositions = [];
-    boids.forEach((boid) => {
-      if (this === boid) return;
-      const distance = Math.abs(boid.position.x - this.position.x) + Math.abs(boid.position.y - this.position.y);
-      if (distance < this.perceptionRadius - 1) {
-        const vector = {
-          x: this.position.x - boid.position.x,
-          y: this.position.y - boid.position.y,
-        };
-
-        vector.x /= distance * distance;
-        vector.y /= distance * distance;
-
-        neighboursPositions.push(vector);
-      }
-    });
-
+  computeSeparationVector(neighboursPositions) {
     if (!neighboursPositions.length) return [];
 
     const avgNeighboursPositions = {
@@ -112,23 +119,12 @@ class Boid {
     ];
   }
 
-  computeAlignmentVector(boids) {
-    const vectors = [];
-    boids.forEach((boid) => {
-      if (this === boid) return;
-      if (
-        Math.abs(boid.position.x - this.position.x) < this.perceptionRadius / 2 &&
-        Math.abs(boid.position.y - this.position.y) < this.perceptionRadius / 2
-      ) {
-        vectors.push(boid.vectors);
-      }
-    });
-
-    if (!vectors.length) return [];
+  computeAlignmentVector(neighboursAlignment) {
+    if (!neighboursAlignment.length) return [];
 
     const avgAlignmentVectors = {
-      x: vectors.reduce((a, b) => a + b.x, 0) / vectors.length,
-      y: vectors.reduce((a, b) => a + b.y, 0) / vectors.length,
+      x: neighboursAlignment.reduce((a, b) => a + b.x, 0) / neighboursAlignment.length,
+      y: neighboursAlignment.reduce((a, b) => a + b.y, 0) / neighboursAlignment.length,
     };
 
     const avgAlignmentVectorsMagnitude = Math.sqrt(
@@ -154,23 +150,12 @@ class Boid {
     ];
   }
 
-  computeCohesionVector(boids) {
-    const neighboursPositions = [];
-    boids.forEach((boid) => {
-      if (this === boid) return;
-      if (
-        Math.abs(boid.position.x - this.position.x) < this.perceptionRadius &&
-        Math.abs(boid.position.y - this.position.y) < this.perceptionRadius
-      ) {
-        neighboursPositions.push(boid.position);
-      }
-    });
-
-    if (!neighboursPositions.length) return [];
+  computeCohesionVector(neighboursCohesion) {
+    if (!neighboursCohesion.length) return [];
 
     const avgNeighboursPositions = {
-      x: neighboursPositions.reduce((a, b) => a + b.x, 0) / neighboursPositions.length,
-      y: neighboursPositions.reduce((a, b) => a + b.y, 0) / neighboursPositions.length,
+      x: neighboursCohesion.reduce((a, b) => a + b.x, 0) / neighboursCohesion.length,
+      y: neighboursCohesion.reduce((a, b) => a + b.y, 0) / neighboursCohesion.length,
     };
 
     avgNeighboursPositions.x -= this.position.x;

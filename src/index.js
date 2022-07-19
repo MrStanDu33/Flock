@@ -16,7 +16,7 @@ function loop() {
 
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  /* eslint-disable */
+  // eslint-disable-next-line no-restricted-syntax
   for (const boid of flock.boids) {
     boid.update(flock.boids);
     if (boid.position.x > flock.maxGridSize) boid.position.x = 0;
@@ -56,7 +56,7 @@ function initializeFlock() {
     flock.insertBoid(boid);
   }
 
-  if (window.loop) window.clearAnimationFrame(window.loop);
+  if (window.loop) window.cancelAnimationFrame(window.loop);
   window.loop = loop();
 }
 

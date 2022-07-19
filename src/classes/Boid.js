@@ -3,6 +3,8 @@
  * @author DANIELS-ROTH Stan <contact@daniels-roth-stan.fr>
  */
 
+import Vector from '$src/classes/Vector';
+
 class Boid {
   position;
 
@@ -16,39 +18,31 @@ class Boid {
 
   constructor({ position, vectors, maxForce, perceptionRadius, maxSpeed }) {
     this.position = position;
-    this.vectors = vectors;
-    this.acceleration = {
-      x: 0,
-      y: 0,
-    };
+    this.vectors = new Vector(vectors);
+    this.acceleration = new Vector({ x: 0, y: 0 });
     this.maxForce = maxForce;
     this.maxSpeed = maxSpeed;
     this.perceptionRadius = perceptionRadius;
   }
 
   update(boids) {
-    const vector = this.computeVector(boids);
+    const vector = new Vector(this.computeVector(boids));
 
-    this.acceleration.x += vector.x;
-    this.acceleration.y += vector.y;
+    this.acceleration.add(vector.getComponents());
 
-    this.position.x += this.vectors.x;
-    this.position.y += this.vectors.y;
+    this.position.x += this.vectors.getComponents().x;
+    this.position.y += this.vectors.getComponents().y;
 
-    this.vectors.x += this.acceleration.x;
-    this.vectors.y += this.acceleration.y;
+    this.vectors.add(this.acceleration.getComponents());
 
-    if (this.vectors.x > this.maxSpeed) this.vectors.x = this.maxSpeed;
-    if (this.vectors.y > this.maxSpeed) this.vectors.y = this.maxSpeed;
-    if (this.vectors.x < -this.maxSpeed) this.vectors.x = -this.maxSpeed;
-    if (this.vectors.y < -this.maxSpeed) this.vectors.y = -this.maxSpeed;
+    this.vectors.limit(this.maxSpeed);
 
-    this.acceleration.x = 0;
-    this.acceleration.y = 0;
+    this.acceleration = new Vector();
+    this.vectors = new Vector(this.vectors.getComponents());
   }
 
   computeVector(boids) {
-    const vectors = [];
+    const vectors = new Vector();
     const neighboursSeparation = [];
     const neighboursAlignment = [];
     const neighboursCohesion = [];
@@ -63,7 +57,7 @@ class Boid {
       }
 
       if (distance < this.perceptionRadius / 2) {
-        neighboursAlignment.push(boid.vectors);
+        neighboursAlignment.push(boid.vectors.getComponents());
       }
 
       if (distance < this.perceptionRadius - 1) {
@@ -74,114 +68,65 @@ class Boid {
       }
     });
 
-    vectors.push(...this.computeSeparationVector(neighboursSeparation));
-    vectors.push(...this.computeAlignmentVector(neighboursAlignment));
-    vectors.push(...this.computeCohesionVector(neighboursCohesion));
+    vectors.add(this.computeSeparationVector(neighboursSeparation));
 
-    if (!vectors.length) return this.vectors;
+    vectors.add(this.computeAlignmentVector(neighboursAlignment));
 
-    const avgVector = {
-      x: vectors.reduce((a, b) => a + b.x, 0) / vectors.length,
-      y: vectors.reduce((a, b) => a + b.y, 0) / vectors.length,
-    };
+    vectors.add(this.computeCohesionVector(neighboursCohesion));
 
-    return avgVector;
+    return vectors.getComponents();
   }
 
   computeSeparationVector(neighboursPositions) {
-    if (!neighboursPositions.length) return [];
+    if (!neighboursPositions.length) return { x: 0, y: 0 };
 
-    const avgNeighboursPositions = {
+    const avgNeighboursPositions = new Vector({
       x: neighboursPositions.reduce((a, b) => a + b.x, 0) / neighboursPositions.length,
       y: neighboursPositions.reduce((a, b) => a + b.y, 0) / neighboursPositions.length,
-    };
+    });
 
-    const avgNeighboursPositionsMagnitude = Math.sqrt(
-      avgNeighboursPositions.x * avgNeighboursPositions.x + avgNeighboursPositions.y * avgNeighboursPositions.y,
-    );
+    avgNeighboursPositions.magnitude(this.maxSpeed);
 
-    avgNeighboursPositions.x = (avgNeighboursPositions.x / avgNeighboursPositionsMagnitude) * this.maxSpeed;
-    avgNeighboursPositions.y = (avgNeighboursPositions.y / avgNeighboursPositionsMagnitude) * this.maxSpeed;
+    avgNeighboursPositions.sub(this.vectors.getComponents());
 
-    avgNeighboursPositions.x -= this.vectors.x;
-    avgNeighboursPositions.y -= this.vectors.y;
+    avgNeighboursPositions.limit(this.maxForce);
 
-    if (avgNeighboursPositions.x > this.maxForce) avgNeighboursPositions.x = this.maxForce;
-    if (avgNeighboursPositions.y > this.maxForce) avgNeighboursPositions.y = this.maxForce;
-    if (avgNeighboursPositions.x < -this.maxForce) avgNeighboursPositions.x = -this.maxForce;
-    if (avgNeighboursPositions.y < -this.maxForce) avgNeighboursPositions.y = -this.maxForce;
+    avgNeighboursPositions.mult(Number(document.querySelector('[name="separation"]').value));
 
-    return [
-      {
-        x: avgNeighboursPositions.x * Number(document.querySelector('[name="separation"]').value),
-        y: avgNeighboursPositions.y * Number(document.querySelector('[name="separation"]').value),
-      },
-    ];
+    return avgNeighboursPositions.getComponents();
   }
 
   computeAlignmentVector(neighboursAlignment) {
-    if (!neighboursAlignment.length) return [];
+    if (!neighboursAlignment.length) return { x: 0, y: 0 };
 
-    const avgAlignmentVectors = {
+    const avgAlignmentVectors = new Vector({
       x: neighboursAlignment.reduce((a, b) => a + b.x, 0) / neighboursAlignment.length,
       y: neighboursAlignment.reduce((a, b) => a + b.y, 0) / neighboursAlignment.length,
-    };
+    });
 
-    const avgAlignmentVectorsMagnitude = Math.sqrt(
-      avgAlignmentVectors.x * avgAlignmentVectors.x + avgAlignmentVectors.y * avgAlignmentVectors.y,
-    );
+    avgAlignmentVectors.magnitude(this.maxSpeed);
+    avgAlignmentVectors.sub(this.vectors.getComponents());
+    avgAlignmentVectors.limit(this.maxForce);
+    avgAlignmentVectors.mult(Number(document.querySelector('[name="alignment"]').value));
 
-    avgAlignmentVectors.x = (avgAlignmentVectors.x / avgAlignmentVectorsMagnitude) * this.maxSpeed;
-    avgAlignmentVectors.y = (avgAlignmentVectors.y / avgAlignmentVectorsMagnitude) * this.maxSpeed;
-
-    avgAlignmentVectors.x -= this.vectors.x;
-    avgAlignmentVectors.y -= this.vectors.y;
-
-    if (avgAlignmentVectors.x > 1) avgAlignmentVectors.x = this.maxForce;
-    if (avgAlignmentVectors.y > 1) avgAlignmentVectors.y = this.maxForce;
-    if (avgAlignmentVectors.x < -1) avgAlignmentVectors.x = -this.maxForce;
-    if (avgAlignmentVectors.y < -1) avgAlignmentVectors.y = -this.maxForce;
-
-    return [
-      {
-        x: avgAlignmentVectors.x * Number(document.querySelector('[name="alignment"]').value),
-        y: avgAlignmentVectors.y * Number(document.querySelector('[name="alignment"]').value),
-      },
-    ];
+    return avgAlignmentVectors.getComponents();
   }
 
   computeCohesionVector(neighboursCohesion) {
-    if (!neighboursCohesion.length) return [];
+    if (!neighboursCohesion.length) return { x: 0, y: 0 };
 
-    const avgNeighboursPositions = {
+    const avgNeighboursPositions = new Vector({
       x: neighboursCohesion.reduce((a, b) => a + b.x, 0) / neighboursCohesion.length,
       y: neighboursCohesion.reduce((a, b) => a + b.y, 0) / neighboursCohesion.length,
-    };
+    });
 
-    avgNeighboursPositions.x -= this.position.x;
-    avgNeighboursPositions.y -= this.position.y;
+    avgNeighboursPositions.sub(this.position);
+    avgNeighboursPositions.magnitude(this.maxSpeed);
+    avgNeighboursPositions.sub(this.vectors.getComponents());
+    avgNeighboursPositions.limit(this.maxForce);
+    avgNeighboursPositions.mult(Number(document.querySelector('[name="cohesion"]').value));
 
-    const avgNeighboursPositionsMagnitude = Math.sqrt(
-      avgNeighboursPositions.x * avgNeighboursPositions.x + avgNeighboursPositions.y * avgNeighboursPositions.y,
-    );
-
-    avgNeighboursPositions.x = (avgNeighboursPositions.x / avgNeighboursPositionsMagnitude) * this.maxSpeed;
-    avgNeighboursPositions.y = (avgNeighboursPositions.y / avgNeighboursPositionsMagnitude) * this.maxSpeed;
-
-    avgNeighboursPositions.x -= this.vectors.x;
-    avgNeighboursPositions.y -= this.vectors.y;
-
-    if (avgNeighboursPositions.x > this.maxForce) avgNeighboursPositions.x = this.maxForce;
-    if (avgNeighboursPositions.y > this.maxForce) avgNeighboursPositions.y = this.maxForce;
-    if (avgNeighboursPositions.x < -this.maxForce) avgNeighboursPositions.x = -this.maxForce;
-    if (avgNeighboursPositions.y < -this.maxForce) avgNeighboursPositions.y = -this.maxForce;
-
-    return [
-      {
-        x: avgNeighboursPositions.x * Number(document.querySelector('[name="cohesion"]').value),
-        y: avgNeighboursPositions.y * Number(document.querySelector('[name="cohesion"]').value),
-      },
-    ];
+    return avgNeighboursPositions.getComponents();
   }
 }
 

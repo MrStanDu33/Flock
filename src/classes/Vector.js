@@ -10,7 +10,12 @@ class Vector {
 
   #magnitude = null;
 
+  constructor(vector = { x: 0, y: 0 }) {
+    this.#innerVectors.push(vector);
+  }
+
   add(position) {
+    if (position === undefined) return;
     this.#innerVectors.push({
       x: position.x,
       y: position.y,
@@ -18,6 +23,7 @@ class Vector {
   }
 
   sub(position) {
+    if (position === undefined) return;
     this.#innerVectors.push({
       x: -position.x,
       y: -position.y,
@@ -25,6 +31,7 @@ class Vector {
   }
 
   mult(multiplier) {
+    if (multiplier === undefined) return;
     this.#innerVectors = this.#innerVectors.map((vector) => ({
       x: vector.x * multiplier,
       y: vector.y * multiplier,
@@ -32,6 +39,7 @@ class Vector {
   }
 
   div(divider) {
+    if (divider === undefined) return;
     this.#innerVectors = this.#innerVectors.map((vector) => ({
       x: vector.x / divider,
       y: vector.y / divider,
@@ -39,10 +47,12 @@ class Vector {
   }
 
   limit(limit) {
+    if (limit === undefined) return;
     this.#limit = limit;
   }
 
   magnitude(magnitude) {
+    if (magnitude === undefined) return;
     this.#magnitude = magnitude;
   }
 
